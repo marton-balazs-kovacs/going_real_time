@@ -2,4 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
-gs_key.txt
+gs_url.txt
+.httr-oauth
