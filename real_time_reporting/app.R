@@ -1,11 +1,8 @@
-library(shiny)
 library(shinydashboard)
 library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
-
-url <- read_lines("real_time_reporting/gs_url.txt")
-
-ss <- gs_url(url, visibility = "public")
+library(DT)
+library(qdap)
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
@@ -20,10 +17,29 @@ ui <- dashboardPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
-  output$plot <- renderPlot({
-    data <- 
-  }) 
+  url <- read_lines("gs_url.txt")
   
+  ss <- gs_url(url, visibility = "public")
+  
+  refresh_time = 10000
+  
+  observe({
+    
+    invalidateLater(refresh_time)
+
+    form_data <- gs_read(ss)
+    
+    form_data <- form_data %>% 
+      rename_all(funs(beg2char(., char = ".")))
+    
+    output$plot <- renderPlot({
+      form_data %>%
+      ggplot() +
+        aes(x = Q0,
+            y = Q2a) +
+        geom_point()
+    }) 
+  })
 }
 
 # Run the application 
