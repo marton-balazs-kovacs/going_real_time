@@ -10,18 +10,23 @@ ui <- dashboardPage(
   dashboardSidebar(),
   dashboardBody(
     fluidRow(
-      column(width = 12,
       box(title = "Automatizált adatgyűjtés és életkor közti összefüggés",
           status = "primary",
           solidHeader = T,
-          plotOutput("plot", height = 250)),
+          plotOutput("scatter_plot",
+                     height = 250)),
+      
       box(title = "Életkor és adatgyűjtés közti korreláció",
           background = "light-blue",
-          tableOutput("cor"))
+          tableOutput("cor")),
+      
+      box(title = "Autamatizált tudományba vetett hit és kor közti összefüggés",
+          solidHeader = T,
+          plotOutput("bar_plot",
+                     height = 250))
       )
+    )
   )
-)
-)
   
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -41,7 +46,7 @@ server <- function(input, output) {
     form_data <- form_data %>% 
       rename_all(funs(beg2char(., char = ".")))
     
-    output$plot <- renderPlot({
+    output$scatter_plot <- renderPlot({
       form_data %>%
       ggplot() +
         aes(x = Q2a,
@@ -54,15 +59,30 @@ server <- function(input, output) {
     }) 
     
     output$cor <- renderTable(colnames = F, {
-      
       cor_test <- cor.test(form_data$Q0, form_data$Q2a, method = "spearman")
       
       tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
              c("Megfigyelések száma:", cor_test$statistic))
     })
     
+    output$bar_plot <- renderPlot({
+      form_data %>% 
+        group_by(Q1) %>% 
+        summarise(mean = round(mean(Q0, na.rm = T), 2),
+                  sd = round(sd(Q0, na.rm = T), 2),
+                  n = n(),
+                  se = sd / sqrt(n)) %>% 
+        ggplot() +
+        aes(x = Q1, y = mean) +
+        geom_bar(stat = "identity") +
+        geom_errorbar(aes(ymin = mean - se,
+                          ymax = mean + se),
+                      position = "dodge") +
+        labs(x = "Lehetséges lesz automatizálni a tudományos folyamatot?",
+             y = "Kor") +
+        theme_minimal()})
   })
-}
+  }
 
 # Run the application 
 shinyApp(ui = ui, server = server)
