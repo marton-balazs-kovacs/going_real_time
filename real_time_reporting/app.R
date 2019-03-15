@@ -10,8 +10,17 @@ ui <- dashboardPage(
   dashboardSidebar(),
   dashboardBody(
     fluidRow(
-      box(plotOutput("plot", height = 250)))
+      column(width = 12,
+      box(title = "Automatizált adatgyűjtés és életkor közti összefüggés",
+          status = "primary",
+          solidHeader = T,
+          plotOutput("plot", height = 250)),
+      box(title = "Életkor és adatgyűjtés közti korreláció",
+          background = "light-blue",
+          tableOutput("cor"))
+      )
   )
+)
 )
   
 # Define server logic required to draw a histogram
@@ -35,10 +44,23 @@ server <- function(input, output) {
     output$plot <- renderPlot({
       form_data %>%
       ggplot() +
-        aes(x = Q0,
-            y = Q2a) +
-        geom_point()
+        aes(x = Q2a,
+            y = Q0) +
+        geom_point() +
+        geom_smooth(method = "lm") +
+        labs(y = "Életkor",
+             x = "Adatgyűjtés automatizálásának várható ideje") +
+        theme_minimal()
     }) 
+    
+    output$cor <- renderTable(colnames = F, {
+      
+      cor_test <- cor.test(form_data$Q0, form_data$Q2a, method = "spearman")
+      
+      tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
+             c("Megfigyelések száma:", cor_test$statistic))
+    })
+    
   })
 }
 
