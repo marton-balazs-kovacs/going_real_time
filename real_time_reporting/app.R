@@ -1,8 +1,7 @@
+library(shiny)
 library(shinydashboard)
 library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
-library(DT)
-library(qdap)
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
