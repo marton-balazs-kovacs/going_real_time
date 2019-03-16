@@ -23,10 +23,10 @@ ui <- dashboardPage(
           solidHeader = T,
           plotOutput("bar_plot",
                      height = 250))
-      )
     )
   )
-  
+)
+
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
@@ -60,45 +60,44 @@ server <- function(input, output) {
   observeEvent(test,{
     
     form_data <- read_data()
-  
-  output$scatter_plot <- renderPlot({
-    form_data %>%
-      ggplot() +
-      aes(x = Q2a,
-          y = Q0) +
-      geom_point() +
-      geom_smooth(method = "lm") +
-      labs(y = "Életkor",
-           x = "Adatgyűjtés automatizálásának várható ideje") +
-      theme_minimal()
-  }) 
-  
-  output$cor <- renderTable(colnames = F, {
-    cor_test <- cor.test(form_data$Q0, form_data$Q2a, method = "spearman")
     
-    tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
-           c("Megfigyelések száma:", cor_test$statistic))
+    output$scatter_plot <- renderPlot({
+      form_data %>%
+        ggplot() +
+        aes(x = Q2a,
+            y = Q0) +
+        geom_point() +
+        geom_smooth(method = "lm") +
+        labs(y = "Életkor",
+             x = "Adatgyűjtés automatizálásának várható ideje") +
+        theme_minimal()
+    }) 
+    
+    output$cor <- renderTable(colnames = F, {
+      cor_test <- cor.test(form_data$Q0, form_data$Q2a, method = "spearman")
+      
+      tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
+             c("Megfigyelések száma:", cor_test$statistic))
+    })
+    
+    output$bar_plot <- renderPlot({
+      form_data %>% 
+        group_by(Q1) %>% 
+        summarise(mean = round(mean(Q0, na.rm = T), 2),
+                  sd = round(sd(Q0, na.rm = T), 2),
+                  n = n(),
+                  se = sd / sqrt(n)) %>% 
+        ggplot() +
+        aes(x = Q1, y = mean) +
+        geom_bar(stat = "identity") +
+        geom_errorbar(aes(ymin = mean - se,
+                          ymax = mean + se),
+                      position = "dodge") +
+        labs(x = "Lehetséges lesz automatizálni a tudományos folyamatot?",
+             y = "Kor") +
+        theme_minimal()})
   })
-  
-  output$bar_plot <- renderPlot({
-    form_data %>% 
-      group_by(Q1) %>% 
-      summarise(mean = round(mean(Q0, na.rm = T), 2),
-                sd = round(sd(Q0, na.rm = T), 2),
-                n = n(),
-                se = sd / sqrt(n)) %>% 
-      ggplot() +
-      aes(x = Q1, y = mean) +
-      geom_bar(stat = "identity") +
-      geom_errorbar(aes(ymin = mean - se,
-                        ymax = mean + se),
-                    position = "dodge") +
-      labs(x = "Lehetséges lesz automatizálni a tudományos folyamatot?",
-           y = "Kor") +
-      theme_minimal()})
-  })
-  }
+}
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
