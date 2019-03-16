@@ -31,7 +31,7 @@ ui <- dashboardPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
   
-  url <- read_lines("gs_url.txt")
+  url <- "https://docs.google.com/spreadsheets/d/1ZL55BCrqqNNmSWr01g5ibL1yLNc-tfuk5IbKYlrnZu4/edit?usp=sharing"
   
   ss <- gs_url(url, visibility = "public")
   
@@ -42,9 +42,10 @@ server <- function(input, output) {
   read_data <- reactive({
     
     invalidateLater(refresh_time)
-
-    temp <- gs_read(ss) %>% 
-      rename_all(funs(beg2char(., char = ".")))
+    
+    temp <- gs_read(ss)
+    pos_of_dot_in_name = unlist(gregexpr(".", names(temp), fixed=TRUE))[2:length(names(temp))]
+    names(temp) = c("time", substr(names(temp)[2:length(names(temp))], 1, pos_of_dot_in_name-1))
     
     temp
   })
