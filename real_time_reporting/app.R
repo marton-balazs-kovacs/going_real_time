@@ -36,7 +36,7 @@ server <- function(input, output) {
   
   refresh_time = 10000
   
-  form_data <- reactiveValues()
+  form_data <- tibble()
   
   read_data <- reactive({
     
@@ -49,7 +49,15 @@ server <- function(input, output) {
     temp
   })
   
-  observeEvent({!identical(form_data,read_data())},{
+  observe({
+    
+    invalidateLater(refresh_time)
+    
+    if(! identical(form_data,read_data())){test <<-
+      1}else{test <<- NULL}
+  })
+  
+  observeEvent(test,{
     
     form_data <- read_data()
   
