@@ -36,7 +36,8 @@ server <- function(input, output) {
   
   refresh_time = 10000
   
-  form_data <- tibble()
+  global <- reactiveValues(form_data = "")
+  test <- reactiveValues(test = NULL)
   
   read_data <- reactive({
     
@@ -53,16 +54,16 @@ server <- function(input, output) {
     
     invalidateLater(refresh_time)
     
-    if(! identical(form_data,read_data())){test <<-
-      1}else{test <<- NULL}
+    if(! identical(global$form_data,read_data())){
+      test$test <-1
+      global$form_data <- read_data()
+    }else{test$test <- NULL}
   })
   
   observeEvent(test,{
     
-    form_data <- read_data()
-    
     output$scatter_plot <- renderPlot({
-      form_data %>%
+      global$form_data %>%
         ggplot() +
         aes(x = Q2a,
             y = Q0) +
@@ -74,14 +75,14 @@ server <- function(input, output) {
     }) 
     
     output$cor <- renderTable(colnames = F, {
-      cor_test <- cor.test(form_data$Q0, form_data$Q2a, method = "spearman")
+      cor_test <- cor.test(global$form_data$Q0, global$form_data$Q2a, method = "spearman")
       
       tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
              c("Megfigyelések száma:", cor_test$statistic))
     })
     
     output$bar_plot <- renderPlot({
-      form_data %>% 
+      global$form_data %>% 
         group_by(Q1) %>% 
         summarise(mean = round(mean(Q0, na.rm = T), 2),
                   sd = round(sd(Q0, na.rm = T), 2),
