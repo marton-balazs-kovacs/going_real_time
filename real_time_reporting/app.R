@@ -36,16 +36,17 @@ server <- function(input, output) {
   
   refresh_time = 10000
   
-  global <- reactiveValues(form_data = "")
-  test <- reactiveValues(test = NULL)
+  values <- reactiveValues()
+  values$trigger <- NULL
+  values$form_data <- tibble()
   
   read_data <- reactive({
     
     invalidateLater(refresh_time)
     
-    temp <- gs_read(ss)
-    pos_of_dot_in_name = unlist(gregexpr(".", names(temp), fixed=TRUE))[2:length(names(temp))]
-    names(temp) = c("time", substr(names(temp)[2:length(names(temp))], 1, pos_of_dot_in_name-1))
+    temp <- gs_read(ss) %>% 
+      rename_all(~ str_to_lower(.)) %>% 
+      rename_at(vars(matches("[.]")), ~ str_extract_all(., "^([^.])+(?=\\.)"))
     
     temp
   })
@@ -54,19 +55,19 @@ server <- function(input, output) {
     
     invalidateLater(refresh_time)
     
-    if(! identical(global$form_data,read_data())){
-      test$test <-1
-      global$form_data <- read_data()
-    }else{test$test <- NULL}
+    if(! identical(values$form_data, read_data())){
+      values$trigger <-1
+      values$form_data <- read_data()
+    }else{values$trigger <- NULL}
   })
   
-  observeEvent(test,{
+  observeEvent(values$trigger,{
     
     output$scatter_plot <- renderPlot({
-      global$form_data %>%
+      values$form_data %>%
         ggplot() +
-        aes(x = Q2a,
-            y = Q0) +
+        aes(x = q2a,
+            y = q0) +
         geom_point() +
         geom_smooth(method = "lm") +
         labs(y = "Életkor",
@@ -75,21 +76,22 @@ server <- function(input, output) {
     }) 
     
     output$cor <- renderTable(colnames = F, {
-      cor_test <- cor.test(global$form_data$Q0, global$form_data$Q2a, method = "spearman")
+      cor_test <- cor.test(values$form_data$q0, values$form_data$q2a, method = "spearman")
+      n_answers <- values$form_data %>% count()
       
       tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
-             c("Megfigyelések száma:", cor_test$statistic))
+             c("Megfigyelések száma:", n_answers))
     })
     
     output$bar_plot <- renderPlot({
-      global$form_data %>% 
-        group_by(Q1) %>% 
-        summarise(mean = round(mean(Q0, na.rm = T), 2),
-                  sd = round(sd(Q0, na.rm = T), 2),
+      values$form_data %>% 
+        group_by(q1) %>% 
+        summarise(mean = round(mean(q0, na.rm = T), 2),
+                  sd = round(sd(q0, na.rm = T), 2),
                   n = n(),
                   se = sd / sqrt(n)) %>% 
         ggplot() +
-        aes(x = Q1, y = mean) +
+        aes(x = q1, y = mean) +
         geom_bar(stat = "identity") +
         geom_errorbar(aes(ymin = mean - se,
                           ymax = mean + se),
