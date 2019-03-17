@@ -6,8 +6,16 @@ suppressPackageStartupMessages(library(tidyverse))
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
   dashboardHeader(),
-  dashboardSidebar(),
+  dashboardSidebar(
+    menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
+    menuItem("Widgets", tabName = "widgets", icon = icon("th"))
+  ),
+  
   dashboardBody(
+    tabItems(
+      
+    # First tab content
+      tabItem(tabName = "dashboard",
     fluidRow(
       box(title = "Automatizált adatgyűjtés és életkor közti összefüggés",
           status = "primary",
@@ -23,6 +31,8 @@ ui <- dashboardPage(
           solidHeader = T,
           plotOutput("bar_plot",
                      height = 250))
+    )
+      )
     )
   )
 )
