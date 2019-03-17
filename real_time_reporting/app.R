@@ -2,13 +2,14 @@ library(shiny)
 library(shinydashboard)
 library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
+library(BayesFactor)
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
   dashboardHeader(),
   dashboardSidebar(
     menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-    menuItem("Widgets", tabName = "widgets", icon = icon("th"))
+    menuItem("Bayes Fatcor számítás", tabName = "bayesfactor", icon = icon("th"))
   ),
   
   dashboardBody(
@@ -32,7 +33,16 @@ ui <- dashboardPage(
           plotOutput("bar_plot",
                      height = 250))
     )
-      )
+      ),
+    tabItem(tabName = "bayesfactor",
+            icon = icon("cog", lib = "glyphicon"),
+            fluidRow(
+              box(title = "Bayes factor ábra",
+                  solidHeader = T,
+                  plotOutput("bf",
+                             height = 250))
+            )
+            )
     )
   )
 )
@@ -49,6 +59,8 @@ server <- function(input, output) {
   values <- reactiveValues()
   values$trigger <- NULL
   values$form_data <- tibble()
+  values$bf_data <- tibble(BF = numeric(0),
+                               n_refresh = numeric(0))
   
   read_data <- reactive({
     
@@ -109,6 +121,47 @@ server <- function(input, output) {
         labs(x = "Lehetséges lesz automatizálni a tudományos folyamatot?",
              y = "Kor") +
         theme_minimal()})
+    
+  })
+  
+  # The plot is not ready
+  # It not is running until if the event is set to NULL
+  # It is running if the event is values$trigger
+  # TODO: Make a pretty plot
+  
+  observeEvent(values$trigger,{
+    
+    bf_temp <- values$form_data %>% 
+      filter(!is.na(q2a)) %>% 
+      mutate(q1 = as.factor(q1))
+    
+    bf = ttestBF(formula =  q2a ~ q1, data = bf_temp)
+    
+    isolate(new_line <- tibble(BF = as.numeric(as.vector(bf)),
+                               n_refresh = length(values$bf_data$n_refresh) +1))
+    
+    isolate(values$bf_data <- bind_rows(values$bf_data, new_line))
+    
+    output$bf <- renderPlot({
+      values$bf_data %>% 
+        ggplot() +
+        aes(x = n_refresh, y = log(BF)) +
+        geom_point() +
+        labs(y = "log(BF)", x = "BF számítások száma") +
+        theme_minimal() 
+        #geom_hline(yintercept=c(c(-log(c(30, 10, 3)), log(c(3, 10, 30)))), linetype="dotted", color="darkgrey") +
+        #geom_hline(yintercept=log(1), linetype="dashed", color="darkgreen") +
+        #geom_point(data=res[res$r %in% dots,], aes(x=r, y=log(BF)), color="red", size=2) +
+        #annotate("text", x=max(rs)*1.8, y=-2.85, label=paste0("Strong~H[", ifelse(forH1==TRUE,0,1), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        #annotate("text", x=max(rs)*1.8, y=-1.7 , label=paste0("Moderate~H[", ifelse(forH1==TRUE,0,1), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        #annotate("text", x=max(rs)*1.8, y=-.55 , label=paste0("Anectodal~H[", ifelse(forH1==TRUE,0,1), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        #annotate("text", x=max(rs)*1.8, y=2.86 , label=paste0("Strong~H[", ifelse(forH1==TRUE,1,0), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        #annotate("text", x=max(rs)*1.8, y=1.7  , label=paste0("Moderate~H[", ifelse(forH1==TRUE,1,0), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        #annotate("text", x=max(rs)*1.8, y=.55  , label=paste0("Anectodal~H[", ifelse(forH1==TRUE,1,0), "]"), hjust=1, vjust=.5, vjust=.5, size=3, color="black", parse=TRUE) +
+        #scale_y_continuous(breaks=c(c(-log(c(30, 10, 3)), 0, log(c(3, 10, 30)))), labels=c("-log(30)", "-log(10)", "-log(3)", "log(1)", "log(3)", "log(10)", "log(30)")) +
+        #scale_x_continuous(breaks=seq(min(rs), max(rs), length.out=xticks))
+      
+    })
   })
 }
 
