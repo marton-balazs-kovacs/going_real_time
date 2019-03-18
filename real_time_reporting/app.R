@@ -9,7 +9,7 @@ header <- dashboardHeader(title = "ISE 2019")
 
 sidebar <- dashboardSidebar(id = "", sidebarMenu(
   menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-  menuItem("Bayes Factor számítás", tabName = "bayesfactor", icon = icon("th"))))
+  menuItem("Bayes factor", tabName = "bayesfactor", icon = icon("th"))))
 
 body <- dashboardBody(
   tabItems(
@@ -17,17 +17,17 @@ body <- dashboardBody(
     # First tab content
     tabItem(tabName = "dashboard",
             fluidRow(
-              box(title = "Automatizált adatgyűjtés és életkor közti összefüggés",
+              box(title = "Relationship between age and the expectance of automated data collection",
                   status = "primary",
                   solidHeader = T,
                   plotOutput("scatter_plot",
                              height = 250)),
               
-              box(title = "Életkor és adatgyűjtés közti korreláció",
+              box(title = "Correlation between age and the expectance of automated data collection in years",
                   background = "light-blue",
                   tableOutput("cor")),
               
-              box(title = "Autamatizált tudományba vetett hit és kor közti összefüggés",
+              box(title = "Relationship between belief in automated research and age",
                   solidHeader = T,
                   plotOutput("bar_plot",
                              height = 250))
@@ -61,7 +61,7 @@ server <- function(input, output) {
   values$trigger <- NULL
   values$form_data <- tibble()
   values$bf_data <- tibble(BF = numeric(0),
-                           n_participant = numeric(0))
+                           n_participant = integer(0))
   
   read_data <- reactive({
     
@@ -93,8 +93,8 @@ server <- function(input, output) {
             y = q0) +
         geom_point() +
         geom_smooth(method = "lm") +
-        labs(y = "Életkor",
-             x = "Adatgyűjtés automatizálásának várható ideje") +
+        labs(y = "Age",
+             x = "Expected time of automatizing data collection") +
         theme_minimal()
     }) 
     
@@ -102,8 +102,8 @@ server <- function(input, output) {
       cor_test <- cor.test(values$form_data$q0, values$form_data$q2a, method = "spearman")
       n_answers <- values$form_data %>% count()
       
-      tibble(c("Spearman rho korrelációs együttható:", cor_test$estimate),
-             c("Megfigyelések száma:", n_answers))
+      tibble(c("Spearman rho correlation coefficient:", cor_test$estimate),
+             c("Sample size:", n_answers))
     })
     
     output$bar_plot <- renderPlot({
@@ -119,15 +119,11 @@ server <- function(input, output) {
         geom_errorbar(aes(ymin = mean - se,
                           ymax = mean + se),
                       position = "dodge") +
-        labs(x = "Lehetséges lesz automatizálni a tudományos folyamatot?",
-             y = "Kor") +
+        labs(x = "I will be possible to fully automatize the research process",
+             y = "Age") +
         theme_minimal()})
     
   })
-  
-  # The plot is not ready
-  # It not is running until if the event is set to NULL
-  # It is running if the event is values$trigger
   
   observeEvent(values$trigger,{
     
@@ -141,21 +137,27 @@ server <- function(input, output) {
     
     bf_min_participant = 15
     
-    if(bf_temp_n == bf_min_participant){
-      new_line <- tibble(BF = as.numeric(as.vector(ttestBF(formula =  q2a ~ q1, data = bf_temp_n))),
-                         n_participant = as.numeric(bf_min_participant))
-      
-      values$bf_data <- bind_rows(values$bf_data, new_line)
-    }if_else(bf_temp_n > bf_min_participant){
-      
-        new_participant_n <- bf_temp_n - max(values$bf_data$n_participant)
+    if(bf_temp_n > bf_min_participant){
+      if(nrow(values$bf_data) == 0){
+        
+        for(i in bf_min_participant:bf_temp_n){
+          bf_temp_sub <- bf_temp[1:i,]
+          
+          new_line <- tibble(BF = as.numeric(as.vector(ttestBF(formula =  q2a ~ q1, data = bf_temp_sub))),
+                             n_participant = as.numeric(i))
+          
+          values$bf_data <- bind_rows(values$bf_data, new_line)}
+        
+        }else{
+        new_participant_n <- max(values$bf_data$n_participant)
         
         for(i in new_participant_n:bf_temp_n){
           bf_temp_sub <- bf_temp[1:i,]
           new_line <- tibble(BF = as.numeric(as.vector(ttestBF(formula =  q2a ~ q1, data = bf_temp_sub))),
                              n_participant = as.numeric(i))
-          values$bf_data <- bind_rows(values$bf_data, new_line)
+          values$bf_data <- bind_rows(values$bf_data, new_line)}
         }
+      
 
     
     # Plot
@@ -170,26 +172,26 @@ server <- function(input, output) {
         labs(y = "log(BF)", x = "Number of participants") +
         scale_y_continuous(breaks = c(c(-log(c(30, 10, 3)), 0, log(c(3, 10, 30)))),
                            labels = c("-log(30)", "-log(10)", "-log(3)", "log(1)", "log(3)", "log(10)", "log(30)")) +
-        scale_x_continuous(limits = c(0, x_limit_max)) +
+        scale_x_continuous(limits = c(bf_min_participant, x_limit_max)) +
         coord_cartesian(ylim=c(-log(40),log(40))) +
         theme_minimal() +
         geom_hline(yintercept=c(c(-log(c(30, 10, 3)), log(c(3, 10, 30)))), linetype="dotted", color="darkgrey") +
         geom_hline(yintercept=log(1), linetype="dashed", color="darkgreen") +
         geom_hline(yintercept=log(3), linetype="dashed", color="red") +
         geom_hline(yintercept=-log(3), linetype="dashed", color="red") +
-        #geom_point(data = values$bf_data[length(values$bf_data),], aes(x=n_participant, y=log(BF)), color="red", size=2) +
+        geom_point(data = values$bf_data[nrow(values$bf_data),], aes(x=n_participant, y=as.numeric(BF)), color="red", size=2) +
         annotate("text", x=x_limit_max, y=-2.85, label = "StrongH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=-1.7 , label = "ModerateH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=-.55 , label = "AnectodalH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=2.86 , label = "StrongH1", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=1.7  , label = "ModerateH1", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=.55  , label = "AnectodalH1", hjust=1, vjust=.5, vjust=.5, size=3, color="black", parse=TRUE)
-    })
+      })
     
     }else{
+      
     output$bf_warning <- renderText({
-      "Nincs elég adat a Bayes Factor kiszámításához."
-    }) 
+      "There is not enough data to calculate the Bayes factor."}) 
     }
   })
 }
