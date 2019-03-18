@@ -61,7 +61,7 @@ server <- function(input, output) {
   values$trigger <- NULL
   values$form_data <- tibble()
   values$bf_data <- tibble(BF = numeric(0),
-                               n_refresh = numeric(0))
+                           n_participant = numeric(0))
   
   read_data <- reactive({
     
@@ -140,17 +140,18 @@ server <- function(input, output) {
     bf = ttestBF(formula =  q2a ~ q1, data = bf_temp)
     
     isolate(new_line <- tibble(BF = as.numeric(as.vector(bf)),
-                               n_refresh = length(values$bf_data$n_refresh) + 1))
+                               n_participant = pull(count(bf_temp),n)))
     
     isolate(values$bf_data <- bind_rows(values$bf_data, new_line))
     
-    x_limit_max <- length(values$bf_data$n_refresh) + 2
+    x_limit_max <- values$bf_data$n_participant * 1.5
     
     output$bf <- renderPlot({
       values$bf_data %>% 
         ggplot() +
-        aes(x = n_refresh, y = as.numeric(BF)) +
+        aes(x = n_participant, y = as.numeric(BF)) +
         geom_point() +
+        geom_line() +
         labs(y = "log(BF)", x = "BF számítások száma") +
         scale_y_continuous(breaks = c(c(-log(c(30, 10, 3)), 0, log(c(3, 10, 30)))),
                            labels = c("-log(30)", "-log(10)", "-log(3)", "log(1)", "log(3)", "log(10)", "log(30)")) +
@@ -159,7 +160,9 @@ server <- function(input, output) {
         theme_minimal() +
         geom_hline(yintercept=c(c(-log(c(30, 10, 3)), log(c(3, 10, 30)))), linetype="dotted", color="darkgrey") +
         geom_hline(yintercept=log(1), linetype="dashed", color="darkgreen") +
-        geom_point(data = values$bf_data[length(values$bf_data),], aes(x=n_refresh, y=log(BF)), color="red", size=2) +
+        geom_hline(yintercept=log(3), linetype="dashed", color="red") +
+        geom_hline(yintercept=-log(3), linetype="dashed", color="red") +
+        #geom_point(data = values$bf_data[length(values$bf_data),], aes(x=n_participant, y=log(BF)), color="red", size=2) +
         annotate("text", x=x_limit_max, y=-2.85, label = "StrongH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=-1.7 , label = "ModerateH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=-.55 , label = "AnectodalH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
