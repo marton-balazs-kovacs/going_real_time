@@ -1,6 +1,6 @@
 library(shiny)
 library(shinydashboard)
-library(googlesheets4)
+library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
 library(BayesFactor)
 
@@ -9,7 +9,7 @@ ui <- dashboardPage(
   dashboardHeader(),
   dashboardSidebar(
     menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-    menuItem("Bayes Fatcor számítás", tabName = "bayesfactor", icon = icon("th"))
+    menuItem("Bayes Factor számítás", tabName = "bayesfactor", icon = icon("th"))
   ),
   
   dashboardBody(
@@ -52,7 +52,7 @@ server <- function(input, output) {
   
   url <- "https://docs.google.com/spreadsheets/d/1ZL55BCrqqNNmSWr01g5ibL1yLNc-tfuk5IbKYlrnZu4/edit?usp=sharing"
   
-  ss <- sheets_get(url)
+  ss <- gs_url(url, visibility = "public")
   
   refresh_time = 10000
   
@@ -127,7 +127,7 @@ server <- function(input, output) {
   # The plot is not ready
   # It not is running until if the event is set to NULL
   # It is running if the event is values$trigger
-  # TODO: Make a pretty plot
+  # TODO: The plot is 
   
   observeEvent(values$trigger,{
     
@@ -138,29 +138,33 @@ server <- function(input, output) {
     bf = ttestBF(formula =  q2a ~ q1, data = bf_temp)
     
     isolate(new_line <- tibble(BF = as.numeric(as.vector(bf)),
-                               n_refresh = length(values$bf_data$n_refresh) +1))
+                               n_refresh = length(values$bf_data$n_refresh) + 1))
     
     isolate(values$bf_data <- bind_rows(values$bf_data, new_line))
+    
+    x_limit_max <- length(values$bf_data$n_refresh) + 2
     
     output$bf <- renderPlot({
       values$bf_data %>% 
         ggplot() +
-        aes(x = n_refresh, y = log(BF)) +
+        aes(x = n_refresh, y = as.numeric(BF)) +
         geom_point() +
         labs(y = "log(BF)", x = "BF számítások száma") +
-        theme_minimal() 
-        #geom_hline(yintercept=c(c(-log(c(30, 10, 3)), log(c(3, 10, 30)))), linetype="dotted", color="darkgrey") +
-        #geom_hline(yintercept=log(1), linetype="dashed", color="darkgreen") +
-        #geom_point(data=res[res$r %in% dots,], aes(x=r, y=log(BF)), color="red", size=2) +
-        #annotate("text", x=max(rs)*1.8, y=-2.85, label=paste0("Strong~H[", ifelse(forH1==TRUE,0,1), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
-        #annotate("text", x=max(rs)*1.8, y=-1.7 , label=paste0("Moderate~H[", ifelse(forH1==TRUE,0,1), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
-        #annotate("text", x=max(rs)*1.8, y=-.55 , label=paste0("Anectodal~H[", ifelse(forH1==TRUE,0,1), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
-        #annotate("text", x=max(rs)*1.8, y=2.86 , label=paste0("Strong~H[", ifelse(forH1==TRUE,1,0), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
-        #annotate("text", x=max(rs)*1.8, y=1.7  , label=paste0("Moderate~H[", ifelse(forH1==TRUE,1,0), "]"), hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
-        #annotate("text", x=max(rs)*1.8, y=.55  , label=paste0("Anectodal~H[", ifelse(forH1==TRUE,1,0), "]"), hjust=1, vjust=.5, vjust=.5, size=3, color="black", parse=TRUE) +
-        #scale_y_continuous(breaks=c(c(-log(c(30, 10, 3)), 0, log(c(3, 10, 30)))), labels=c("-log(30)", "-log(10)", "-log(3)", "log(1)", "log(3)", "log(10)", "log(30)")) +
-        #scale_x_continuous(breaks=seq(min(rs), max(rs), length.out=xticks))
-      
+        scale_y_continuous(breaks = c(c(-log(c(30, 10, 3)), 0, log(c(3, 10, 30)))),
+                           labels = c("-log(30)", "-log(10)", "-log(3)", "log(1)", "log(3)", "log(10)", "log(30)")) +
+        scale_x_continuous(limits = c(0, x_limit_max)) +
+        coord_cartesian(ylim=c(-log(40),log(40))) +
+        theme_minimal() +
+        geom_hline(yintercept=c(c(-log(c(30, 10, 3)), log(c(3, 10, 30)))), linetype="dotted", color="darkgrey") +
+        geom_hline(yintercept=log(1), linetype="dashed", color="darkgreen") +
+        geom_point(data = values$bf_data[length(values$bf_data),], aes(x=n_refresh, y=log(BF)), color="red", size=2) +
+        annotate("text", x=x_limit_max, y=-2.85, label = "StrongH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        annotate("text", x=x_limit_max, y=-1.7 , label = "ModerateH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        annotate("text", x=x_limit_max, y=-.55 , label = "AnectodalH0", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        annotate("text", x=x_limit_max, y=2.86 , label = "StrongH1", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        annotate("text", x=x_limit_max, y=1.7  , label = "ModerateH1", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
+        annotate("text", x=x_limit_max, y=.55  , label = "AnectodalH1", hjust=1, vjust=.5, vjust=.5, size=3, color="black", parse=TRUE)
+  
     })
   })
 }
