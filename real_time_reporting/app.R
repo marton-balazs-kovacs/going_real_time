@@ -1,6 +1,6 @@
 library(shiny)
 library(shinydashboard)
-library(googlesheets)
+library(googlesheets4)
 suppressPackageStartupMessages(library(tidyverse))
 library(BayesFactor)
 
@@ -52,7 +52,7 @@ server <- function(input, output) {
   
   url <- "https://docs.google.com/spreadsheets/d/1ZL55BCrqqNNmSWr01g5ibL1yLNc-tfuk5IbKYlrnZu4/edit?usp=sharing"
   
-  ss <- gs_url(url, visibility = "public")
+  ss <- sheets_get(url)
   
   refresh_time = 10000
   
