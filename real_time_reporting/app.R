@@ -135,16 +135,31 @@ server <- function(input, output) {
       filter(!is.na(q2a)) %>% 
       mutate(q1 = as.factor(q1))
     
-    if(pull(count(bf_temp),n) > 15){
+    bf_temp_n <- bf_temp %>%
+      count() %>% 
+      pull(n)
     
-    bf = ttestBF(formula =  q2a ~ q1, data = bf_temp)
+    bf_min_participant = 15
     
-    isolate(new_line <- tibble(BF = as.numeric(as.vector(bf)),
-                               n_participant = pull(count(bf_temp),n)))
+    if(bf_temp_n == bf_min_participant){
+      new_line <- tibble(BF = as.numeric(as.vector(ttestBF(formula =  q2a ~ q1, data = bf_temp_n))),
+                         n_participant = as.numeric(bf_min_participant))
+      
+      values$bf_data <- bind_rows(values$bf_data, new_line)
+    }if_else(bf_temp_n > bf_min_participant){
+      
+        new_participant_n <- bf_temp_n - max(values$bf_data$n_participant)
+        
+        for(i in new_participant_n:bf_temp_n){
+          bf_temp_sub <- bf_temp[1:i,]
+          new_line <- tibble(BF = as.numeric(as.vector(ttestBF(formula =  q2a ~ q1, data = bf_temp_sub))),
+                             n_participant = as.numeric(i))
+          values$bf_data <- bind_rows(values$bf_data, new_line)
+        }
+
     
-    isolate(values$bf_data <- bind_rows(values$bf_data, new_line))
-    
-    x_limit_max <- values$bf_data$n_participant * 1.5
+    # Plot
+    x_limit_max <- max(values$bf_data$n_participant) * 1.5
     
     output$bf <- renderPlot({
       values$bf_data %>% 
@@ -152,7 +167,7 @@ server <- function(input, output) {
         aes(x = n_participant, y = as.numeric(BF)) +
         geom_point() +
         geom_line() +
-        labs(y = "log(BF)", x = "BF számítások száma") +
+        labs(y = "log(BF)", x = "Number of participants") +
         scale_y_continuous(breaks = c(c(-log(c(30, 10, 3)), 0, log(c(3, 10, 30)))),
                            labels = c("-log(30)", "-log(10)", "-log(3)", "log(1)", "log(3)", "log(10)", "log(30)")) +
         scale_x_continuous(limits = c(0, x_limit_max)) +
