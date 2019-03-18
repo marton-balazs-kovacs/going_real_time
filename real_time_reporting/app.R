@@ -4,36 +4,35 @@ library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
 library(BayesFactor)
 
-# Define UI for application that draws a histogram
-ui <- dashboardPage(
-  dashboardHeader(),
-  dashboardSidebar(
-    menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
-    menuItem("Bayes Factor számítás", tabName = "bayesfactor", icon = icon("th"))
-  ),
-  
-  dashboardBody(
-    tabItems(
-      
+# Define UI parts
+header <- dashboardHeader(title = "ISE 2019")
+
+sidebar <- dashboardSidebar(id = "", sidebarMenu(
+  menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
+  menuItem("Bayes Factor számítás", tabName = "bayesfactor", icon = icon("th"))))
+
+body <- dashboardBody(
+  tabItems(
+    
     # First tab content
-      tabItem(tabName = "dashboard",
-    fluidRow(
-      box(title = "Automatizált adatgyűjtés és életkor közti összefüggés",
-          status = "primary",
-          solidHeader = T,
-          plotOutput("scatter_plot",
-                     height = 250)),
-      
-      box(title = "Életkor és adatgyűjtés közti korreláció",
-          background = "light-blue",
-          tableOutput("cor")),
-      
-      box(title = "Autamatizált tudományba vetett hit és kor közti összefüggés",
-          solidHeader = T,
-          plotOutput("bar_plot",
-                     height = 250))
-    )
-      ),
+    tabItem(tabName = "dashboard",
+            fluidRow(
+              box(title = "Automatizált adatgyűjtés és életkor közti összefüggés",
+                  status = "primary",
+                  solidHeader = T,
+                  plotOutput("scatter_plot",
+                             height = 250)),
+              
+              box(title = "Életkor és adatgyűjtés közti korreláció",
+                  background = "light-blue",
+                  tableOutput("cor")),
+              
+              box(title = "Autamatizált tudományba vetett hit és kor közti összefüggés",
+                  solidHeader = T,
+                  plotOutput("bar_plot",
+                             height = 250))
+            )
+    ),
     tabItem(tabName = "bayesfactor",
             icon = icon("cog", lib = "glyphicon"),
             fluidRow(
@@ -42,10 +41,12 @@ ui <- dashboardPage(
                   plotOutput("bf",
                              height = 250))
             )
-            )
-    )
-  )
-)
+    )))
+
+# Define UI
+ui <- dashboardPage(header,
+                    sidebar,
+                    body)
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
@@ -127,13 +128,14 @@ server <- function(input, output) {
   # The plot is not ready
   # It not is running until if the event is set to NULL
   # It is running if the event is values$trigger
-  # TODO: The plot is 
   
   observeEvent(values$trigger,{
     
     bf_temp <- values$form_data %>% 
       filter(!is.na(q2a)) %>% 
       mutate(q1 = as.factor(q1))
+    
+    if(pull(count(bf_temp),n) > 15){
     
     bf = ttestBF(formula =  q2a ~ q1, data = bf_temp)
     
@@ -164,8 +166,13 @@ server <- function(input, output) {
         annotate("text", x=x_limit_max, y=2.86 , label = "StrongH1", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=1.7  , label = "ModerateH1", hjust=1, vjust=.5, size=3, color="black", parse=TRUE) +
         annotate("text", x=x_limit_max, y=.55  , label = "AnectodalH1", hjust=1, vjust=.5, vjust=.5, size=3, color="black", parse=TRUE)
-  
     })
+    
+    }else{
+    output$bf_warning <- renderText({
+      "Nincs elég adat a Bayes Factor kiszámításához."
+    }) 
+    }
   })
 }
 
