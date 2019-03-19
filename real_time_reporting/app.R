@@ -60,6 +60,7 @@ server <- function(input, output) {
   
   refresh_time = 10000
   
+
   values <- reactiveValues()
   values$trigger <- NULL
   values$form_data <- tibble()
@@ -77,6 +78,7 @@ server <- function(input, output) {
     temp
   })
   
+
   observe({
     
     invalidateLater(refresh_time)
@@ -88,7 +90,7 @@ server <- function(input, output) {
   })
   
   observeEvent(values$trigger,{
-    
+ 
     output$scatter_plot <- renderPlot({
       values$form_data %>%
         ggplot() +
