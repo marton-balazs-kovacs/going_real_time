@@ -3,9 +3,11 @@ library(shinydashboard)
 library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
 library(BayesFactor)
+library(shinyjs)
 
 # Define UI parts
-header <- dashboardHeader(title = "ISE 2019")
+header <- dashboardHeader(title = "ISE 2019",
+                          dropdownMenuOutput("bf_warning"))
 
 sidebar <- dashboardSidebar(id = "", sidebarMenu(
   menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),
@@ -41,7 +43,8 @@ body <- dashboardBody(
                   plotOutput("bf",
                              height = 250))
             )
-    )))
+    )
+    ))
 
 # Define UI
 ui <- dashboardPage(header,
@@ -138,6 +141,7 @@ server <- function(input, output) {
     bf_min_participant = 15
     
     if(bf_temp_n > bf_min_participant){
+      output$bf_warning <- NULL
       if(nrow(values$bf_data) == 0){
         
         for(i in bf_min_participant:bf_temp_n){
@@ -189,10 +193,15 @@ server <- function(input, output) {
       })
     
     }else{
+      output$bf <- NULL
       
-    output$bf_warning <- renderText({
-      "There is not enough data to calculate the Bayes factor."}) 
-    }
+    output$bf_warning <- renderMenu({
+      dropdownMenu(type = "notifications", badgeStatus = "warning",
+                   notificationItem(text = "Sample size is not enough for BF analysis.",
+                                    icon = icon("ok", lib = "glyphicon"),
+                                    status = "danger"))
+  })
+}
   })
 }
 
