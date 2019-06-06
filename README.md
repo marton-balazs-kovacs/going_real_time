@@ -4,8 +4,6 @@
 
 This project explores possible solutions for the utilizitation of continuous data deposition, sharing, analysis and reporting to facilitate openness and credibility.
 
-***
-
 ## Reporting results real-time
 
 The application analyses google form responses real-time and create an interactive report from the results.
@@ -34,9 +32,8 @@ The app reads in the data from a google spreadsheet that is directly linked to t
 
 * Third, you have to make sure that you have changed the variable names in the code in the app.R file to the variable names you used.
 
-**Congratulations!** You are done. You can deploy your application and see the automatically updated plots and results.
-
-***
+**Congratulations!**
+You are done. You can deploy your application and see the automatically updated plots and results.
 
 ## Further plans
 
