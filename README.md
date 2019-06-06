@@ -8,9 +8,11 @@ This project explores possible solutions for the utilizitation of continuous dat
 
 The application analyses google form responses real-time and create an interactive report from the results.
 
-### Demo questionnaire
+### Demo
 
 You can check out and answer the demo questionnaire on [HERE](https://forms.gle/Gg446ZPG3X2Eqea69).
+
+You can find the running version of the app [HERE](https://martonbalazskovacs.shinyapps.io/real_time_reporting/).
 
 ### Using the app to report the results of your own questionnaire
 
@@ -37,6 +39,7 @@ You are done. You can deploy your application and see the automatically updated 
 
 ## Further plans
 
+* Adjust the app to changing browser window size
 * Modularizing the app
 * Transplant the app into a package
 * Add interactive variable selection
