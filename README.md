@@ -26,7 +26,7 @@ The app will use this identifiers as variable names that you can use in order to
 
 The app reads in the data from a google spreadsheet that is directly linked to the google form.
 
-* First, in order to report the results of your own questionnaire you have to set the access to the spreadsheet to "Public on the web". *(Please be aware, that after changing the access to public, anyone on the internet can find and view the responses.)*
+* First, in order to report the results of your own questionnaire you have to set the access to the spreadsheet to "Public on the web". Also, you have to enable the "Publish to the web" from the file menu. (Please be aware, that after changing the access to public, anyone on the internet can find and view the responses.)*
 
 * Second, you have to copy the url of the spreadsheet in the gs_url.txt file and save it.
 
