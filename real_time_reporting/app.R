@@ -4,6 +4,10 @@ library(shinydashboard)
 library(googlesheets)
 suppressPackageStartupMessages(library(tidyverse))
 library(BayesFactor)
+library(papaja)
+
+# Call modules
+#source(".R")
 
 # Define UI parts
 ## Define header
@@ -36,6 +40,9 @@ body <- dashboardBody(
                   solidHeader = T,
                   plotOutput("bar_plot",
                              height = 250))
+            ),
+            fluidRow(
+              downloadButton("preprint", "Generate report")
             )
     ),
     
@@ -252,6 +259,27 @@ server <- function(input, output) {
   })
 }
   })
+  
+  # Generate and download report
+  output$preprint <- downloadHandler(
+    
+    filename = "preprint.html",
+    
+    content = function(file) {
+
+      temp_preprint <- file.path(tempdir(), "preprint.Rmd")
+      file.copy("preprint.Rmd", temp_preprint, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(scatter = output$scatter_plot)
+      
+      rmarkdown::render(input = temp_preprint,
+                        output_format = "html_document",
+                        output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    })
 }
 
 # Run the application 

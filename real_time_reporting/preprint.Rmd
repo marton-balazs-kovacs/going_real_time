@@ -1,0 +1,18 @@
+---
+title: "prerpint"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output: html_document
+params:
+  scatter_plot: NA
+---
+
+# This is the author page
+
+******
+
+# This is the second page with the results
+## Scatter plot
+
+```{r}
+plot()
+```
