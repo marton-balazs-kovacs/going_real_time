@@ -7,7 +7,8 @@ library(BayesFactor)
 library(papaja)
 
 # Call modules
-#source(".R")
+source("scatter_module.R")
+source("bar_module.R")
 
 # Define UI parts
 ## Define header
@@ -26,21 +27,11 @@ body <- dashboardBody(
     # First tab content
     tabItem(tabName = "dashboard",
             fluidRow(
-              box(title = "Relationship between age and the expectance of automated data collection",
-                  status = "primary",
-                  solidHeader = T,
-                  plotOutput("scatter_plot",
-                             height = 250)),
-              
+              scatter_module_output("scatter"),
               box(title = "Correlation between age and the expectance of automated data collection in years",
                   background = "light-blue",
                   tableOutput("cor")),
-              
-              box(title = "Relationship between belief in automated research and age",
-                  solidHeader = T,
-                  plotOutput("bar_plot",
-                             height = 250))
-            ),
+              bar_module_output("bar")),
             fluidRow(
               downloadButton("preprint", "Generate report")
             )
@@ -73,7 +64,7 @@ server <- function(input, output) {
   url <- read_lines("gs_url.txt")
   
   # Create connection through the url with the spreadsheet
-  ss <- gs_url(url, visibility = "public")
+  ss <- suppressMessages(gs_url(url, visibility = "public"))
   
   # Set the time interval for the refresh of the app (in milliseconds)
   refresh_time <- 10000
@@ -98,7 +89,7 @@ server <- function(input, output) {
     invalidateLater(refresh_time)
     
     # Read in data and transform variable names
-    temp <- gs_read(ss) %>% 
+    temp <- suppressMessages(gs_read(ss)) %>% 
       rename_all(~ str_to_lower(.)) %>% # Convert variable names to lower case  
       rename_at(vars(matches("[.]")),
                 ~ str_extract(., "^([^.])+(?=\\.)")) # Save the identifiers of the question as variable names
@@ -124,19 +115,8 @@ server <- function(input, output) {
   # Create an expression for plotting the results of the analysis that is triggered by new responses
   observeEvent(values$trigger,{
     
-    # Create a scatterplot
-    output$scatter_plot <- renderPlot({
-      
-      values$form_data %>%
-        ggplot() +
-        aes(x = q2a,
-            y = q0) +
-        geom_point() +
-        geom_smooth(method = "lm") +
-        labs(y = "Age",
-             x = "Expected time of automatizing data collection") +
-        theme_minimal()
-    }) 
+    # Create a scatterplot 
+    callModule(scatter_module, "scatter", data = reactive(values$form_data))
     
     # Create a table that shows correlation between variables
     output$cor <- renderTable(colnames = F, {
@@ -148,22 +128,7 @@ server <- function(input, output) {
     })
     
     # Create a barplot
-    output$bar_plot <- renderPlot({
-      values$form_data %>% 
-        group_by(q1) %>% 
-        summarise(mean = round(mean(q0, na.rm = T), 2),
-                  sd = round(sd(q0, na.rm = T), 2),
-                  n = n(),
-                  se = sd / sqrt(n)) %>% 
-        ggplot() +
-        aes(x = q1, y = mean) +
-        geom_bar(stat = "identity") +
-        geom_errorbar(aes(ymin = mean - se,
-                          ymax = mean + se),
-                      position = "dodge") +
-        labs(x = "I believe that it will be possible to fully automatize the research process",
-             y = "Age") +
-        theme_minimal()})
+    callModule(bar_module, "bar", data = reactive(values$form_data))
     
   })
   

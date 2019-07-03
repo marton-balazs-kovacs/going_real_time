@@ -1,3 +1,5 @@
+# Module UI function
+
 scatter_module_output <- function(id){
   
   ns <- NS(id)
@@ -10,20 +12,23 @@ scatter_module_output <- function(id){
   
 }
 
+# Module server function
+
 scatter_module <- function(input, output, session, data){
   
-  data <- reactive(data())
-  
-    output$scatter_plot <- renderPlot({
+    output$plot <- renderPlot({
       
-      data %>%
+      data() %>%
         ggplot() +
-        aes(x = q1,
+        aes(x = q0,
             y = q2a) +
         geom_point() +
         geom_smooth(method = "lm") +
         labs(y = "Age",
              x = "Expected time of automatizing data collection") +
         theme_minimal()
+      
       })
 }
+
+# Module util functions
