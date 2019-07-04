@@ -18,17 +18,23 @@ scatter_module <- function(input, output, session, data){
   
     output$plot <- renderPlot({
       
-      data() %>%
-        ggplot() +
-        aes(x = q0,
-            y = q2a) +
-        geom_point() +
-        geom_smooth(method = "lm") +
-        labs(y = "Age",
-             x = "Expected time of automatizing data collection") +
-        theme_minimal()
+      scatter_plot(data = data())
       
       })
-}
+    }
 
 # Module util functions
+
+scatter_plot <- function(data){
+  
+  data %>%
+    ggplot() +
+    aes(x = q0,
+        y = q2a) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    labs(y = "Age",
+         x = "Expected time of automatizing data collection") +
+    theme_minimal()
+  
+}
