@@ -14,5 +14,5 @@ params:
 ## Scatter plot
 
 ```{r}
-plot()
+
 ```

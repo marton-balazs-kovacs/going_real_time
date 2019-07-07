@@ -41,9 +41,7 @@ body <- dashboardBody(
               scatter_module_output("scatter"),
               cor_module_output("cor"),
               bar_module_output("bar"),
-              bayes_plot_module_output("bayes")
-              ),
-            fluidRow(
+              bayes_plot_module_output("bayes"),
               generate_preprint_module_ui("preprint")
               )
             )
