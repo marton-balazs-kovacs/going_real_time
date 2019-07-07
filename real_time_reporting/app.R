@@ -38,12 +38,26 @@ body <- dashboardBody(
     
     tabItem(tabName = "dashboard",
             fluidRow(
-              scatter_module_output("scatter"),
-              cor_module_output("cor"),
-              bar_module_output("bar"),
-              bayes_plot_module_output("bayes"),
-              generate_preprint_module_ui("preprint")
-              )
+              column(12, align="right",
+                     bayes_plot_module_output("bayes"),
+                     img(src='myImage.png', align = "right")
+              )),
+            fluidRow(
+              column(12, align="center",
+                     scatter_module_output("scatter")
+              )),
+            fluidRow(
+              column(12, align="center",
+                     bar_module_output("bar")
+              )),
+            fluidRow(
+              column(12, align="center",
+                     cor_module_output("cor")
+              )),
+            fluidRow(
+              column(12, align="left",
+                     generate_preprint_module_ui("preprint")
+              ))
             )
     )
   )
