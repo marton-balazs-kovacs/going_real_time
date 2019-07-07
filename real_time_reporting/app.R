@@ -39,9 +39,7 @@ body <- dashboardBody(
     tabItem(tabName = "dashboard",
             fluidRow(
               column(12, align="right",
-                     bayes_plot_module_output("bayes"),
-                     img(src='myImage.png', align = "right")
-              )),
+                     bayes_plot_module_output("bayes"))),
             fluidRow(
               column(12, align="center",
                      scatter_module_output("scatter")
@@ -71,7 +69,7 @@ ui <- dashboardPage(header,
 # Define server logic
 
 server <- function(input, output) {
-  
+
   # Read in the url of the google spreadsheet that contains the output of your google form
   
   url <- read_lines("gs_url.txt")
