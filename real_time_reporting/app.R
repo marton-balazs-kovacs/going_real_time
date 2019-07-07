@@ -51,10 +51,6 @@ body <- dashboardBody(
             fluidRow(
               column(12, align="center",
                      cor_module_output("cor")
-              )),
-            fluidRow(
-              column(12, align="left",
-                     generate_preprint_module_ui("preprint")
               ))
             )
     )
@@ -203,8 +199,6 @@ server <- function(input, output) {
   })
   
   # Generate and download report
-  
-  callModule(generate_preprint_module, "preprint")
   
 }
 

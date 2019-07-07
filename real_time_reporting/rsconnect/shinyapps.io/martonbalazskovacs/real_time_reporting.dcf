@@ -5,8 +5,8 @@ account: martonbalazskovacs
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 968856
-bundleId: 2135505
+bundleId: 2207466
 url: https://martonbalazskovacs.shinyapps.io/real_time_reporting/
-when: 1559829752.51335
+when: 1562500184.34496
 asMultiple: FALSE
 asStatic: FALSE
